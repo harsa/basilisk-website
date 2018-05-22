@@ -1,37 +1,74 @@
-## Welcome to GitHub Pages
+## Basilisk - Temperature logger
 
-You can use the [editor on GitHub](https://github.com/harsa/basilisk-website/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+A DIY IoT system for logging temperature & humidity data with inexpensive hardware.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Introduction 
+Internet-of-things -things are fun and surprising cheap to get started with. This post describes the setup for a scalable system for   real-time logging  of temperate and humidity data. Sensor units are easy and cheap to put together in numbers.
 
-### Markdown
+### Required hardware
+For each sensor unit a NodeMCU board with an ESP8266 chip and a DHT22 temperature sensor are needed. The NodeMCU’s are powered with a regular micro-usb jack and can be had for less than 6€ total.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+For the server part, mine runs on a Raspberry pi model 3, but any computer running Linux or Os X should do . The server is a Node app with sqlite, mosquitto and an embedded node-red instance for REST API endpoints.
 
-```markdown
-Syntax highlighted code block
+### Setting up the server
 
-# Header 1
-## Header 2
-### Header 3
+use the command
+git clone https://github.com/harsa/basilisk-node
+to clone the basilisk server to a directory of your choosing.
 
-- Bulleted
-- List
+Make sure your (local) server ip is static make a note for use in the next step. 
 
-1. Numbered
-2. List
+Install js dependencies by running 
+npm install 
 
-**Bold** and _Italic_ and `Code` text
+install mosquitto as the mqtt message broker with
+apt-get install mosquitto
 
-[Link](url) and ![Image](src)
-```
+start the server with
+node index.js
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Setting up the sensors
+Connect the DHT22 to NodeMCU. DHT22 Pins + o - should go to  x, x and on the NodeMCU. 
 
-### Jekyll Themes
+Arduino IDE is required to compile & install the Arduino sketch running the sensors. Download and open the sketch and edit the WiFi settings and server IP.
+ https://github.com/harsa/basilisk-esp8266
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/harsa/basilisk-website/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+Upload the sketch to the NodeMCU through the micro-USB port and verify that something meaningful is output in the arduino serial console. Disconnect the NodeMCU from your computer and power it with a regular micro-USB power supply.
 
-### Support or Contact
+Note that you can upload the same version of this sketch of all the sensors you have without having to make per unit changes.
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### Seeing it all come together
+ 
+Type your server’s ip address to your browser. Note that you have to be on the same local network. 
+
+### TECHNICAL STUFF
+
+#### Delivering measurements with MQTT
+The sensors are read once a minute and values transmitted with the MQTT protocol to message broker running on the server.
+
+#### Logging measurements and setting api endpoints
+Node-red does the heavy lifting when it comes to measurements. 
+
+A flow exists MQTT messages are listened to and values saved for corresponding sensors. Values are persisted in a sqlite database.
+
+#### Web app
+A statically served React+Redux app. Displays a temperature gauge and a line chart for each sensor. Get’s live updates from the same mqtt broker as the server that persistst it but over websockets. 
+Check out the source & build instructions at [Github]
+
+Note: A prebuilt version of this already exists in the basilisk-node and doesn’t need to be manually build 
+
+basilisk-web in github
+
+Relevant Git repositories 
+basilisk-node
+basilisk-esp8266
+basilisk-web
+
+#### Links
+Nodemcu in aliexpress
+DHT22 in aliexpress
+Raspberry Pi Model 3B starter pack
+
+https://github.com/harsa/basilisk-node
+https://github.com/harsa/basilisk-esp8266
+https://github.com/harsa/basilisk-web
